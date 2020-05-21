@@ -2,9 +2,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/nav_settings"
-        android:icon="@drawable/ic_settings_black_24dp"
-        android:title="Settings"/>
+        android:id="@+id/nav_send"
+        android:icon="@drawable/ic_send_black_24dp"
+        android:title="Send"/>
 
     <item
         android:id="@+id/nav_colors"
@@ -12,8 +12,8 @@
         android:title="Colors"/>
 
     <item
-        android:id="@+id/nav_send"
-        android:icon="@drawable/ic_send_black_24dp"
-        android:title="Send"/>
+        android:id="@+id/nav_settings"
+        android:icon="@drawable/ic_settings_black_24dp"
+        android:title="Settings"/>
 
 </menu>
