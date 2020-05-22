@@ -13,6 +13,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import org.greenrobot.eventbus.EventBus;
+
 public class SendFragment extends Fragment {
 
     private static final String TAG = "SendFragment";
@@ -44,11 +46,12 @@ public class SendFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
-    // sends a message to MainActivity
+    // sends a message using EventBus
     private void sendMessage(String message)
     {
-        Intent sendMessageIntent = new Intent(getActivity(), MainActivity.class);
         Log.d(TAG, "Sending Message from SendFragment: " + message);
-        sendMessageIntent.putExtra("message", message);
+        EventBus.getDefault().post(new FragMessage(message));
     }
+
+
 }

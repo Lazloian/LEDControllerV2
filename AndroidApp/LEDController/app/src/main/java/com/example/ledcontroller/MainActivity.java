@@ -12,8 +12,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,12 +39,18 @@ public class MainActivity extends AppCompatActivity {
 
         // show the send fragment on app startup
         getSupportFragmentManager().beginTransaction().replace(fragmentContainer.getId(), new SendFragment()).commit();
+    }
 
-        // create an IntentFilter to catch intents from fragments, intents will be named by their destination
-        IntentFilter fragFilter = new IntentFilter("LEDController.MainActivity");
+    @Override
+    protected void onStart() {
+        super.onStart();
+        EventBus.getDefault().register(this);
+    }
 
-        // register a broadcastReceiver to manage the incoming messages from the fragments
-        registerReceiver(fragmentReceiver, fragFilter);
+    @Override
+    protected void onStop() {
+        super.onStop();
+        EventBus.getDefault().unregister(this);
     }
 
     // switches the active fragment when it is selected in the bottom navigation view
@@ -71,14 +81,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
 
-    // BroadcastReceiver for receiving messages from fragments
-    private BroadcastReceiver fragmentReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // get message from intent
-            String message = intent.getStringExtra("message");
-
-            Log.d(TAG, "fragmentReceiver Incoming Message: " + message);
-        }
-    };
+    @Subscribe
+    public void onMessageReceive(FragMessage fragMessage)
+    {
+        Log.d(TAG, "Message Received From Fragment: " + fragMessage.getMessage());
+        Toast.makeText(this, fragMessage.getMessage(), Toast.LENGTH_SHORT).show();
+    }
 }
