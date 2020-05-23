@@ -33,7 +33,7 @@ public class SendFragment extends Fragment {
         connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String message = "ConnectBL";
+                String message = "ConnectBT";
                 sendMessage(message);
             }
         });
