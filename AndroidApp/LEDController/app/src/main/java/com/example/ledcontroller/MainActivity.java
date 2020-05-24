@@ -23,6 +23,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.UUID;
 
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         EventBus.getDefault().register(this);
+        checkBTConnection();
     }
 
     // disables EventBus communication when app is paused (in background)
@@ -121,8 +123,33 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
 
+    // bluetooth methods
+
+    // enables bluetooth
+    public void enableBT()
+    {
+        // request BT enable
+        Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        startActivity(enableBTIntent);
+
+        // track changes to BT state
+        IntentFilter BTIntentFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        registerReceiver(btStateReceiver, BTIntentFilter);
+    }
+
+    // connects the phone to the esp32
     public void ConnectBT()
     {
+        // if BT is not enabled, enable it
+        if (!mBluetoothAdapter.isEnabled())
+        {
+            Log.d(TAG, "ConnectBT: Enabling Bluetooth");
+            enableBT();
+        }
+
+        // wait till Bluetooth is enabled
+        while (!mBluetoothAdapter.isEnabled()) {}
+
         Log.d(TAG, "ConnectBT: Looking for LEDController");
 
         // cancel discovery and restart it
@@ -155,6 +182,7 @@ public class MainActivity extends AppCompatActivity {
                     mBluetoothAdapter.cancelDiscovery();
                     unregisterReceiver(btDeviceReceiver);
                     Log.d(TAG, "ConnectBT: LEDController not found, disabling discover");
+                    EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE));
                 }
             }
         }.start();
@@ -167,12 +195,23 @@ public class MainActivity extends AppCompatActivity {
         // get message
         final String message = fragMessage.getMessage();
         Log.d(TAG, "Message Received From Fragment: " + message);
+    }
 
-        // do something depending on the message
-        switch (message)
+    // this runs on the MainActivity thread so ui changes can be made (like displaying toasts)
+    @Subscribe (threadMode = ThreadMode.MAIN)
+    public void onMainMessageReceive(MainMessage mainMessage)
+    {
+        switch (mainMessage.getMessage())
         {
-            case "ConnectBT":
+            case MainMessage.BT_CONNECT:
+                Toast.makeText(this, "Connecting ...", Toast.LENGTH_SHORT).show();
                 ConnectBT();
+                break;
+            case MainMessage.CONNECTION_SUCCESS:
+                Toast.makeText(this, "Connection Successful", Toast.LENGTH_SHORT).show();
+                break;
+            case MainMessage.CONNECTION_FAILURE:
+                Toast.makeText(this, "Connection Failed", Toast.LENGTH_SHORT).show();
         }
     }
 

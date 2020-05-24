@@ -33,8 +33,7 @@ public class SendFragment extends Fragment {
         connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String message = "ConnectBT";
-                sendMessage(message);
+                sendMessage(MainMessage.BT_CONNECT);
             }
         });
 
@@ -47,10 +46,10 @@ public class SendFragment extends Fragment {
     }
 
     // sends a message using EventBus
-    private void sendMessage(String message)
+    private void sendMessage(int message)
     {
         Log.d(TAG, "Sending Message from SendFragment: " + message);
-        EventBus.getDefault().post(new FragMessage(message));
+        EventBus.getDefault().post(new MainMessage(message));
     }
 
 

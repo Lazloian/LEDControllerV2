@@ -147,6 +147,7 @@ public class BluetoothConnectionService {
                     Log.e(TAG, "run: Unable to close connection in socket" + ex.getMessage());
                 }
                 Log.d(TAG, "run: Could not connect to UUID: " + MY_UUID_INSECURE);
+                EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE));
             }
 
             // run connected to handle reading and writing
@@ -214,6 +215,10 @@ public class BluetoothConnectionService {
                 e.printStackTrace();
             }
 
+            Log.d(TAG, "ConnectedThread: BT Connection Successful");
+            EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_SUCCESS));
+
+            // set data streams
             mmInStream = tmpIn;
             mmOutStream = tmpOut;
         }
