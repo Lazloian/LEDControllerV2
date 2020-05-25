@@ -234,9 +234,9 @@ public class BluetoothConnectionService {
             {
                 // Read data from input stream
                 try {
-                    bytes = mmInStream.read(buffer);
+                    mmInStream.read(buffer);
                     // takes the first (bytes) number of bytes from the buffer and converts it to a string with 0 offset
-                    String incomingMessage = new String(buffer, 0, bytes);
+                    char incomingMessage = (char) buffer[0];//new String(buffer, 0, 1);
                     //Log.d(TAG, "InputStream: " + incomingMessage);
 
                     // Send incomingMessage to MainActivity through EventBus
@@ -244,6 +244,7 @@ public class BluetoothConnectionService {
 
                 } catch (IOException e) {
                     Log.d(TAG, "run: Error reading input stream: " + e.getMessage());
+                    EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE));
                     // stop listening to input stream
                     break; // REEEEEEEEEEEEEEEEEEEEE NO BREAK STATEMENT REEEEEEEEEEEEEEEE
                 }
@@ -256,11 +257,15 @@ public class BluetoothConnectionService {
             String text = new String(buffer, Charset.defaultCharset());
             Log.d(TAG, "write: Writing to output stream: " + text);
 
+            // esp32 LEDController program starts a data read at '.' and ends it at '\n'
             try{
+                mmOutStream.write('.');
                 mmOutStream.write(buffer);
+                mmOutStream.write('\n');
             }catch (IOException e){
                 Log.d(TAG, "write: Write failed: " + text);
                 Log.e(TAG, "write: Error writing to output stream: " + e.getMessage());
+                EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE));
             }
         }
 

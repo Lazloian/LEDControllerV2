@@ -25,20 +25,16 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.nio.charset.Charset;
 import java.util.UUID;
 
-/* TODO:
-    Make one button connection
-    Toast confirmations for connected and debug
-    Make new eventbus for BT state changes (like connection successful because only BTConnectionService will know)
-    Might change FragMessage to something else that can do above
-*/
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity"; // tag for console logging
     private FrameLayout fragmentContainer; // holds fragments
 
     private final int btWaitTime = 10000; // the amount of time to search for esp32
+    private boolean isConnected = false; // keeps track of the connection state of the bluetooth device
 
     // bluetooth objects
     BluetoothAdapter mBluetoothAdapter;
@@ -82,7 +78,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         EventBus.getDefault().register(this);
-        checkBTConnection();
+
+        // if the bluetooth device was previously connected, check if it is still responding
+        if (isConnected)
+        {
+            checkBTConnection();
+        }
     }
 
     // disables EventBus communication when app is paused (in background)
@@ -140,52 +141,62 @@ public class MainActivity extends AppCompatActivity {
     // connects the phone to the esp32
     public void ConnectBT()
     {
-        // if BT is not enabled, enable it
-        if (!mBluetoothAdapter.isEnabled())
+        // check if the bluetooth device is already connected
+        if (isConnected && mBTDevice.getBondState() == BluetoothDevice.BOND_BONDED)
         {
-            Log.d(TAG, "ConnectBT: Enabling Bluetooth");
-            enableBT();
+            Toast.makeText(this, "Device Already Connected", Toast.LENGTH_SHORT).show();
         }
-
-        // wait till Bluetooth is enabled
-        while (!mBluetoothAdapter.isEnabled()) {}
-
-        Log.d(TAG, "ConnectBT: Looking for LEDController");
-
-        // cancel discovery and restart it
-        mBluetoothAdapter.cancelDiscovery();
-
-        // check permissions (this needs to be done even though it is in manifest)
-        int permissionCheck = this.checkSelfPermission("Manifest.permission.ACCESS_FINE_LOCATION");
-        permissionCheck += this.checkSelfPermission("Manifest.permission.ACCESS_COARSE_LOCATION");
-        if (permissionCheck != 0)
-        {
-            this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1001);
-        }
-
-        // start discovery and register receiver to get found devices (the receiver will pair to the esp32)
-        mBluetoothAdapter.startDiscovery();
-        IntentFilter discoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(btDeviceReceiver, discoverDevicesIntent);
-
-        // if timer finishes and LEDController not found, discover is disabled
-        CountDownTimer btWaitTimer = new CountDownTimer(btWaitTime, btWaitTime)
-        {
-            public void onTick(long millisUntilFinished)
-            {
+        else {
+            // if BT is not enabled, enable it
+            if (!mBluetoothAdapter.isEnabled()) {
+                Log.d(TAG, "ConnectBT: Enabling Bluetooth");
+                enableBT();
             }
 
-            public void onFinish()
-            {
-                if (mBTDevice == null)
-                {
-                    mBluetoothAdapter.cancelDiscovery();
-                    unregisterReceiver(btDeviceReceiver);
-                    Log.d(TAG, "ConnectBT: LEDController not found, disabling discover");
-                    EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE));
+            // wait till Bluetooth is enabled
+            while (!mBluetoothAdapter.isEnabled()) {
+            }
+
+            Log.d(TAG, "ConnectBT: Looking for LEDController");
+            Toast.makeText(this, "Connecting ...", Toast.LENGTH_SHORT).show();
+
+            // cancel discovery and restart it
+            mBluetoothAdapter.cancelDiscovery();
+
+            // check permissions (this needs to be done even though it is in manifest)
+            int permissionCheck = this.checkSelfPermission("Manifest.permission.ACCESS_FINE_LOCATION");
+            permissionCheck += this.checkSelfPermission("Manifest.permission.ACCESS_COARSE_LOCATION");
+            if (permissionCheck != 0) {
+                this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1001);
+            }
+
+            // start discovery and register receiver to get found devices (the receiver will pair to the esp32)
+            mBluetoothAdapter.startDiscovery();
+            IntentFilter discoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            registerReceiver(btDeviceReceiver, discoverDevicesIntent);
+
+            // if timer finishes and LEDController not found, discover is disabled
+            CountDownTimer btWaitTimer = new CountDownTimer(btWaitTime, btWaitTime) {
+                public void onTick(long millisUntilFinished) {
                 }
-            }
-        }.start();
+
+                public void onFinish() {
+                    if (mBTDevice == null) {
+                        mBluetoothAdapter.cancelDiscovery();
+                        //unregisterReceiver(btDeviceReceiver);
+                        Log.d(TAG, "ConnectBT: LEDController not found, disabling discover");
+                        EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE));
+                    }
+                }
+            }.start();
+        }
+    }
+
+    // checks if the esp32 is still responding by sending a connection message
+    public void checkBTConnection()
+    {
+        isConnected = false;
+        mBluetoothConnection.write("Connection".getBytes(Charset.defaultCharset()));
     }
 
     // EventBus subscribers
@@ -204,21 +215,33 @@ public class MainActivity extends AppCompatActivity {
         switch (mainMessage.getMessage())
         {
             case MainMessage.BT_CONNECT:
-                Toast.makeText(this, "Connecting ...", Toast.LENGTH_SHORT).show();
                 ConnectBT();
                 break;
             case MainMessage.CONNECTION_SUCCESS:
                 Toast.makeText(this, "Connection Successful", Toast.LENGTH_SHORT).show();
+                isConnected = true;
                 break;
             case MainMessage.CONNECTION_FAILURE:
                 Toast.makeText(this, "Connection Failed", Toast.LENGTH_SHORT).show();
+                isConnected = false;
+                break;
         }
     }
 
     @Subscribe
     public void onBTMessageReceive(BTMessage btMessage)
     {
-        Log.d(TAG, "Message Received From BT: " + btMessage.getMessage());
+        char message = btMessage.getMessage();
+        Log.d(TAG, "Message Received From BT: " + message);
+
+        // if 'y' is received, then the esp32 is still connected
+        switch (message)
+        {
+            case 'y':
+                isConnected = true;
+                Log.d(TAG, "onBTMessageReceive: Device still connected");
+                break;
+        }
     }
 
     // Broadcast Receivers

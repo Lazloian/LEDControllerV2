@@ -2,6 +2,8 @@
 
 BluetoothSerial SerialBT; // bluetooth communication object
 
+String btData;
+
 void setup() {
   Serial.begin(115200);
   Serial.println("Booting");
@@ -22,8 +24,32 @@ void loop() {
   // data is read from bluetooth serial
   if (SerialBT.available())
   {
-    Serial.write(SerialBT.read()); // read data
+    char incomingChar = SerialBT.read();
+
+    if (incomingChar == '.')
+    {
+      btData = "";
+    }
+    else if (incomingChar == '\n')
+    {
+      Serial.println("\nIncoming Data: " + btData);
+      btEvent();
+    }
+    else
+    {
+      btData += String(incomingChar);
+    }
+
+    //Serial.print(incomingChar);
   }
 
   delay(20); // dont do this in final please
+}
+
+void btEvent()
+{
+  if (btData == "Connection")
+  {
+    SerialBT.print('y'); 
+  }
 }

@@ -3,16 +3,16 @@ package com.example.ledcontroller;
 // class to store messages received from BTConnection service that are sent to MainActivity
 public class BTMessage {
 
-    private String mMessage;
+    private char mMessage;
 
     // constructor
-    BTMessage(String message)
+    BTMessage(char message)
     {
         mMessage = message;
     }
 
     // message getter
-    public String getMessage()
+    public char getMessage()
     {
         return mMessage;
     }
