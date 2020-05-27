@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-public class ColorsFragment extends Fragment {
+public class PatternsFragment extends Fragment {
 
     @Nullable
     @Override

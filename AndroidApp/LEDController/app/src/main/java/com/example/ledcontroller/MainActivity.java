@@ -3,7 +3,7 @@ package com.example.ledcontroller;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
@@ -44,6 +44,9 @@ public class MainActivity extends AppCompatActivity {
     // UUID for communication with esp32, uuid in android example will not work
     private static final UUID MY_UUID_INSECURE = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
+    // colorPattern database
+    private PatternViewModel mPatternViewModel;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +65,10 @@ public class MainActivity extends AppCompatActivity {
 
         // get bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+
+        // create patternViewModel
+        mPatternViewModel = new ViewModelProvider(this).get(PatternViewModel.class);
     }
 
     // runs when app is killed
@@ -108,8 +115,8 @@ public class MainActivity extends AppCompatActivity {
                             selectedFragment = new SendFragment();
                             break;
                         case R.id.nav_colors:
-                            Log.d(TAG, "onNavigationItemSelected: Colors Fragment");
-                            selectedFragment = new ColorsFragment();
+                            Log.d(TAG, "onNavigationItemSelected: Patterns Fragment");
+                            selectedFragment = new PatternsFragment();
                             break;
                         case R.id.nav_settings:
                             Log.d(TAG, "onNavigationItemSelected: Settings Fragment");
@@ -240,6 +247,9 @@ public class MainActivity extends AppCompatActivity {
             case 'y':
                 isConnected = true;
                 Log.d(TAG, "onBTMessageReceive: Device still connected");
+                break;
+            case 'd':
+                Log.d(TAG, "onBTMessageReceive: Send Successful");
                 break;
         }
     }

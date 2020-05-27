@@ -4,6 +4,8 @@ package com.example.ledcontroller;
 public class BTMessage {
 
     private char mMessage;
+    public static final int UPDATE_ERROR = 0;
+    public static final int UPDATE_SUCCESS = 1;
 
     // constructor
     BTMessage(char message)

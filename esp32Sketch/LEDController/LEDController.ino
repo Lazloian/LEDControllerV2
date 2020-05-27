@@ -1,8 +1,16 @@
 #include "BluetoothSerial.h" // bluetooth library
+#include "FastLED.h" // LED library
+
+#define NUM_LEDS 60
+#define LED_PIN 32
+#define BRIGHTNESS 100
 
 BluetoothSerial SerialBT; // bluetooth communication object
 
 String btData;
+char btChars[10];
+
+CRGB leds[NUM_LEDS];
 
 void setup() {
   Serial.begin(115200);
@@ -10,6 +18,10 @@ void setup() {
 
   // set up bluetooth communication
   SerialBT.begin("LEDController"); // name of bluetooth device
+
+  // set up leds
+  FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
+  FastLED.setBrightness(BRIGHTNESS);
 
   Serial.println("Bluetooth and setup finished");
 }
@@ -26,21 +38,23 @@ void loop() {
   {
     char incomingChar = SerialBT.read();
 
+    // new message starts with a period
     if (incomingChar == '.')
     {
       btData = "";
     }
+    // messages end with a newline
     else if (incomingChar == '\n')
     {
       Serial.println("\nIncoming Data: " + btData);
+      //btData.toCharArray(btChars, btData.length());
       btEvent();
     }
+    // if it is neither it is part of the string
     else
     {
       btData += String(incomingChar);
     }
-
-    //Serial.print(incomingChar);
   }
 
   delay(20); // dont do this in final please
@@ -48,8 +62,24 @@ void loop() {
 
 void btEvent()
 {
-  if (btData == "Connection")
+  if (btData.charAt(0) == 'C')
   {
     SerialBT.print('y'); 
   }
+  else if (btData.charAt(0) == 'h')
+  {
+    hueColor();
+  }
+}
+
+void hueColor()
+{ 
+  int hue = btData.substring(1, 4).toInt();
+  for (int i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = CHSV(hue, 255, 255);
+  }
+  FastLED.show();
+
+  SerialBT.print('d');
 }
