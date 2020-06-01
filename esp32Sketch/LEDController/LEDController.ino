@@ -37,7 +37,17 @@ void loop() {
   if (SerialBT.available())
   {
     char incomingChar = SerialBT.read();
+    Serial.println(incomingChar);
 
+    if (incomingChar == 'C')
+    {
+      SerialBT.print('y');
+    }
+    if (incomingChar == 'h')
+    {
+      hueColor();
+    }
+    /*
     // new message starts with a period
     if (incomingChar == '.')
     {
@@ -54,10 +64,24 @@ void loop() {
     else
     {
       btData += String(incomingChar);
-    }
+    }*/
   }
 
   delay(20); // dont do this in final please
+}
+
+char getBT()
+{
+  char btChar = NULL;
+
+  while (!SerialBT.available())
+  {
+    
+  }
+
+  btChar = SerialBT.read() + 128;
+  Serial.println((int) btChar);
+  return btChar;
 }
 
 void btEvent()
@@ -74,7 +98,8 @@ void btEvent()
 
 void hueColor()
 { 
-  int hue = btData.substring(1, 4).toInt();
+  //int hue = btData.substring(1, 4).toInt();
+  uint8_t hue = getBT();
   for (int i = 0; i < NUM_LEDS; i++)
   {
     leds[i] = CHSV(hue, 255, 255);

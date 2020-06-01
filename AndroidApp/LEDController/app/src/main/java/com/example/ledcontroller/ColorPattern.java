@@ -18,10 +18,10 @@ public class ColorPattern {
     // code to send to esp32
     @NonNull
     @ColumnInfo(name = "code")
-    private String mCode;
+    private byte[] mCode;
 
     // constructor
-    public ColorPattern(@NonNull String name, @NonNull String code)
+    public ColorPattern(@NonNull String name, @NonNull byte[] code)
     {
         this.mName = name;
         this.mCode = code;
@@ -34,7 +34,7 @@ public class ColorPattern {
     }
 
     // get code
-    public String getCode()
+    public byte[] getCode()
     {
         return this.mCode;
     }

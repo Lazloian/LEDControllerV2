@@ -23,6 +23,9 @@ public interface PatternDao { // public in the following methods is redundant si
     @Delete // deletes the pattern with the same primary key
     void delete(ColorPattern colorPattern);
 
+    @Query("DELETE FROM pattern_table") // deletes all entities in the pattern table
+    void deleteAll();
+
     @Query("SELECT * from pattern_table ORDER BY name ASC") // returns an alphabetized list of all the patterns
     LiveData<List<ColorPattern>> getPatterns();
 }

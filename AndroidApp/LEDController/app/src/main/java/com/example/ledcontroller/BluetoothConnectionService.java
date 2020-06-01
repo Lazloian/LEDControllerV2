@@ -147,7 +147,7 @@ public class BluetoothConnectionService {
                     Log.e(TAG, "run: Unable to close connection in socket" + ex.getMessage());
                 }
                 Log.d(TAG, "run: Could not connect to UUID: " + MY_UUID_INSECURE);
-                EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE));
+                EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE, 0));
             }
 
             // run connected to handle reading and writing
@@ -216,7 +216,7 @@ public class BluetoothConnectionService {
             }
 
             Log.d(TAG, "ConnectedThread: BT Connection Successful");
-            EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_SUCCESS));
+            EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_SUCCESS, 0));
 
             // set data streams
             mmInStream = tmpIn;
@@ -244,7 +244,7 @@ public class BluetoothConnectionService {
 
                 } catch (IOException e) {
                     Log.d(TAG, "run: Error reading input stream: " + e.getMessage());
-                    EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE));
+                    EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE, 0));
                     // stop listening to input stream
                     break; // REEEEEEEEEEEEEEEEEEEEE NO BREAK STATEMENT REEEEEEEEEEEEEEEE
                 }
@@ -256,16 +256,15 @@ public class BluetoothConnectionService {
         {
             String text = new String(buffer, Charset.defaultCharset());
             Log.d(TAG, "write: Writing to output stream: " + text);
+            Log.d(TAG, "write: " + (int) buffer[1]);
 
-            // esp32 LEDController program starts a data read at '.' and ends it at '\n'
+            // send string to esp32 in bytes
             try{
-                mmOutStream.write('.');
                 mmOutStream.write(buffer);
-                mmOutStream.write('\n');
             }catch (IOException e){
                 Log.d(TAG, "write: Write failed: " + text);
                 Log.e(TAG, "write: Error writing to output stream: " + e.getMessage());
-                EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE));
+                EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE, 0));
             }
         }
 

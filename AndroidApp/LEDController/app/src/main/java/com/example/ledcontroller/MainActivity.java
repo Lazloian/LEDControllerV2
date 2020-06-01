@@ -3,6 +3,7 @@ package com.example.ledcontroller;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.Manifest;
@@ -26,7 +27,12 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+
+import static java.nio.charset.StandardCharsets.US_ASCII;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
 
     private final int btWaitTime = 10000; // the amount of time to search for esp32
     private boolean isConnected = false; // keeps track of the connection state of the bluetooth device
+
+    private List<ColorPattern> mColorPatterns;
 
     // bluetooth objects
     BluetoothAdapter mBluetoothAdapter;
@@ -66,9 +74,16 @@ public class MainActivity extends AppCompatActivity {
         // get bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-
         // create patternViewModel
         mPatternViewModel = new ViewModelProvider(this).get(PatternViewModel.class);
+
+        // get list of colorPatterns whenever it is updated
+        mPatternViewModel.getAllColorPatterns().observe(this, new Observer<List<ColorPattern>>() {
+            @Override
+            public void onChanged(List<ColorPattern> colorPatterns) {
+                mColorPatterns = colorPatterns;
+            }
+        });
     }
 
     // runs when app is killed
@@ -146,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // connects the phone to the esp32
-    public void ConnectBT()
+    public void connectBT()
     {
         // check if the bluetooth device is already connected
         if (isConnected && mBTDevice.getBondState() == BluetoothDevice.BOND_BONDED)
@@ -192,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
                         mBluetoothAdapter.cancelDiscovery();
                         //unregisterReceiver(btDeviceReceiver);
                         Log.d(TAG, "ConnectBT: LEDController not found, disabling discover");
-                        EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE));
+                        EventBus.getDefault().post(new MainMessage(MainMessage.CONNECTION_FAILURE, 0));
                     }
                 }
             }.start();
@@ -203,7 +218,26 @@ public class MainActivity extends AppCompatActivity {
     public void checkBTConnection()
     {
         isConnected = false;
-        mBluetoothConnection.write("Connection".getBytes(Charset.defaultCharset()));
+        mBluetoothConnection.write("C".getBytes(Charset.defaultCharset()));
+    }
+
+    // sends a pattern code to the esp32
+    public void sendBT(int position)
+    {
+        // check if esp32 is connected
+        if (isConnected)
+        {
+            // get pattern from list
+            ColorPattern pattern = mColorPatterns.get(position);
+
+            // send code
+            Log.d(TAG, "sendBT: Sending Pattern: " + pattern.getName() + " " + Arrays.toString(pattern.getCode()));
+            mBluetoothConnection.write(pattern.getCode());
+        }
+        else
+        {
+            Toast.makeText(this, "Controller Not Connected", Toast.LENGTH_SHORT).show();
+        }
     }
 
     // EventBus subscribers
@@ -221,8 +255,11 @@ public class MainActivity extends AppCompatActivity {
     {
         switch (mainMessage.getMessage())
         {
+            case MainMessage.BT_SEND:
+                sendBT(mainMessage.getPosition());
+                break;
             case MainMessage.BT_CONNECT:
-                ConnectBT();
+                connectBT();
                 break;
             case MainMessage.CONNECTION_SUCCESS:
                 Toast.makeText(this, "Connection Successful", Toast.LENGTH_SHORT).show();

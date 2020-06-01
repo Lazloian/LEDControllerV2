@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">LEDController</string>
+    <string name="button_connect">Connect</string>
 </resources>
