@@ -1,4 +1,15 @@
 <resources>
     <string name="app_name">LEDController</string>
     <string name="button_connect">Connect</string>
+    <string name="button_edit">EDIT</string>
+    <string name="button_new">NEW</string>
+    <string name="button_delete">DELETE</string>
+    <string name="textView_selected">Select Pattern</string>
+    <string name="button_done">DONE</string>
+    <string name="editText_name">Name</string>
+    <string name="button_cancel">CANCEL</string>
+
+    <string-array name="types_array">
+        <item>Simple</item>
+    </string-array>
 </resources>

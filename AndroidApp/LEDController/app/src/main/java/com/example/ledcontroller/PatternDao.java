@@ -14,7 +14,7 @@ import java.util.List;
 @Dao
 public interface PatternDao { // public in the following methods is redundant since this is an interface
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE) // Inserts a pattern into the database, if there is a name conflict it is ignored
+    @Insert(onConflict = OnConflictStrategy.REPLACE) // Inserts a pattern into the database, if there is a name conflict it is replaced
     void insert(ColorPattern colorPattern);
 
     @Update // updates the pattern with the same primary key

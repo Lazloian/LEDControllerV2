@@ -256,7 +256,6 @@ public class BluetoothConnectionService {
         {
             String text = new String(buffer, Charset.defaultCharset());
             Log.d(TAG, "write: Writing to output stream: " + text);
-            Log.d(TAG, "write: " + (int) buffer[1]);
 
             // send string to esp32 in bytes
             try{
