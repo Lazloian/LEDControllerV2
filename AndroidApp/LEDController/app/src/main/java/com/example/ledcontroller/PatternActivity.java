@@ -9,6 +9,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,6 +17,7 @@ import androidx.fragment.app.Fragment;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 public class PatternActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     private static final String TAG = "PatternActivity";
@@ -50,7 +52,7 @@ public class PatternActivity extends AppCompatActivity implements AdapterView.On
 
         // fragmentContainer
         fragmentContainer = findViewById(R.id.frameLayout);
-        getSupportFragmentManager().beginTransaction().replace(fragmentContainer.getId(), new simpleFragment()).commit();
+        getSupportFragmentManager().beginTransaction().replace(fragmentContainer.getId(), new SimpleFragment()).commit();
 
         // EditText for the name
         nameText = findViewById(R.id.editText_name);
@@ -64,7 +66,11 @@ public class PatternActivity extends AppCompatActivity implements AdapterView.On
         switch (position)
         {
             case 0: // Simple
-                selected = new simpleFragment();
+                selected = new SimpleFragment();
+                break;
+            case 1:
+                selected = new FadeFragment();
+                break;
         }
         // show new fragment
         getSupportFragmentManager().beginTransaction().replace(fragmentContainer.getId(), selected).commit();
@@ -89,25 +95,45 @@ public class PatternActivity extends AppCompatActivity implements AdapterView.On
         EventBus.getDefault().unregister(this);
     }
     // Subscribers
-    @Subscribe
+    // receives the pattern code from the respective pattern thread
+    @Subscribe (threadMode = ThreadMode.MAIN)
     public void onPatternReceive(PatternMessage patternMessage)
     {
-        byte[] code = patternMessage.getCode();
-        Intent resultIntent = new Intent();
-
-        if (code[0] == 0)
+        // checks for errors first
+        if (patternMessage.getError() == PatternMessage.ERROR_COLOR_MISSING)
         {
-            Log.d(TAG, "onPatternReceive: Cancelling Pattern");
-            setResult(RESULT_CANCELED, resultIntent);
+            Toast.makeText(this, "Pick A Color", Toast.LENGTH_SHORT).show();
         }
-        else
+        else if (patternMessage.getError() == PatternMessage.ERROR_NUM_INVALID)
         {
-            Log.d(TAG, "onPatternReceive: Saving Pattern: " + nameText.getText().toString());
-            resultIntent.putExtra(EXTRA_NAME, nameText.getText().toString());
-            resultIntent.putExtra(EXTRA_CODE, code);
-            setResult(RESULT_OK, resultIntent);
+            Toast.makeText(this, "Number Input Missing Or Invalid", Toast.LENGTH_SHORT).show();
         }
+        else if (patternMessage.getError() != PatternMessage.ERROR_CANCEL && nameText.getText().toString().equals(""))
+        {
+            Toast.makeText(this, "Input A Name", Toast.LENGTH_SHORT).show();
+        }
+        // if no errors or cancel, finish the activity
+        else {
+            // create intent and get pattern code and name
+            Intent resultIntent = new Intent();
+            patternName = nameText.getText().toString();
+            patternCode = patternMessage.getCode();
 
-        finish();
+            // don't send any extras if it is cancelled
+            if (patternMessage.getError() == PatternMessage.ERROR_CANCEL) {
+                Log.d(TAG, "onPatternReceive: Cancelling New Pattern");
+                setResult(RESULT_CANCELED, resultIntent);
+            }
+            // send code and name if done is pressed
+            else
+            {
+                Log.d(TAG, "onPatternReceive: Saving Pattern " + patternName);
+                resultIntent.putExtra(EXTRA_NAME, patternName);
+                resultIntent.putExtra(EXTRA_CODE, patternCode);
+                setResult(RESULT_OK, resultIntent);
+            }
+
+            finish();
+        }
     }
 }

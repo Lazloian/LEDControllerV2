@@ -155,9 +155,9 @@ public class MainActivity extends AppCompatActivity {
         Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         startActivity(enableBTIntent);
 
-        // track changes to BT state
-        IntentFilter BTIntentFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        registerReceiver(btStateReceiver, BTIntentFilter);
+        // track changes to BT state ONLY FOR DEBUG
+        // IntentFilter BTIntentFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        // registerReceiver(btStateReceiver, BTIntentFilter);
     }
 
     // connects the phone to the esp32

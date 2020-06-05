@@ -8,8 +8,17 @@
     <string name="button_done">DONE</string>
     <string name="editText_name">Name</string>
     <string name="button_cancel">CANCEL</string>
+    <string name="button_set">SET</string>
+    <string name="textView_name">Name:</string>
+    <string name="textView_length">Length: \n0 - 255</string>
+    <string name="textView_speed">Speed: \n0 - 255</string>
+    <string name="textView_speedFade">Speed: \n1 - 255</string>
+    <string name="textView_fade">Fade:\n0 - 255</string>
 
     <string-array name="types_array">
         <item>Simple</item>
+        <item>Fade</item>
+        <item>Banner</item>
+        <item>Flow</item>
     </string-array>
 </resources>

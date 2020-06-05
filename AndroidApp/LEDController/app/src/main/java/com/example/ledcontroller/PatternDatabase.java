@@ -54,13 +54,13 @@ public abstract class PatternDatabase extends RoomDatabase {
                 // interact with the database below
                 // delete previous patterns (for testing)
                 dao.deleteAll();
-                byte[] code = {'h', 0 - 128};
+                byte[] code = {'s', 0-128, 0-128, 1-128, 0 - 128};
                 ColorPattern pattern = new ColorPattern("Red", code);
                 dao.insert(pattern);
-                code[1] = 96 - 128;
+                code[4] = 96 - 128;
                 pattern = new ColorPattern("Green", code);
                 dao.insert(pattern);
-                code[1] = 160 - 128;
+                code[4] = 160 - 128;
                 pattern = new ColorPattern("Blue", code);
                 dao.insert(pattern);
             });

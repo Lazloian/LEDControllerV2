@@ -72,7 +72,7 @@
         android:id="@+id/textView_length"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/textView_length"
+        android:text="@string/textView_fade"
         android:textSize="25sp"
         app:layout_constraintTop_toBottomOf="@+id/textView_colorSet1"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -80,7 +80,7 @@
         android:layout_marginStart="20dp"/>
 
     <EditText
-        android:id="@+id/editText_length"
+        android:id="@+id/editText_fade"
         android:layout_width="100dp"
         android:layout_height="50dp"
         android:inputType="number"
@@ -94,7 +94,7 @@
         android:id="@+id/textView_speed"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/textView_speed"
+        android:text="@string/textView_speedFade"
         android:textSize="25sp"
         app:layout_constraintTop_toBottomOf="@+id/textView_length"
         app:layout_constraintLeft_toLeftOf="parent"
