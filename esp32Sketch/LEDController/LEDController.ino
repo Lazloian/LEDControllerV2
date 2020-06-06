@@ -57,7 +57,7 @@ void setup() {
 // loop doesnt do anything, it has the lowest priority (will only run every 10 seconds)
 // might do something later like check a switch or led
 void loop() {
-  vTaskDelay(10000 / portTICK_PERIOD_MS); // pause for ten second (other tasks can be run)
+  vTaskDelay(100000 / portTICK_PERIOD_MS); // pause for 100 seconds (other tasks can be run)
 }
 
 // check for new BT Data every second and sorts data based on type
@@ -69,8 +69,8 @@ void checkBTData(void * parameter)
     {
       // get pattern type
       btChars[0] = SerialBT.read();
-      //Serial.print("Pattern: ");
-      //Serial.println(btChars[0]);
+      Serial.print("Pattern: ");
+      Serial.println(btChars[0]);
 
       switch (btChars[0])
       {
@@ -106,13 +106,13 @@ void updatePattern(void * parameter)
   {
     if (newPattern)
     {
-      //Serial.println("Updating Pattern");
+      Serial.println("Updating Pattern");
       newPattern = false;
       // delete currently running pattern task if there is one running
       if (taskHandler != NULL)
       {
         vTaskDelete(taskHandler);
-        //Serial.println("task deleted");
+        Serial.println("task deleted");
       }
       // start new task based on pattern type
       switch (btChars[0])
@@ -124,7 +124,7 @@ void updatePattern(void * parameter)
           xTaskCreatePinnedToCore(fade, "fade", 1000, NULL, 2, &taskHandler, 1);
           break;
       }
-      //Serial.println("Update Done");
+      Serial.println("Update Done");
     }
      
     vTaskDelay(DATA_TASK_DELAY / portTICK_PERIOD_MS); // pause for one second (other tasks can be run)
@@ -275,12 +275,12 @@ char getBTChar()
 
   while (!SerialBT.available()) // wait until a new bt char comes through
   {
-    vTaskDelay(100 / portTICK_PERIOD_MS); // code works without this, but I want to make sure the bluetooth server isnt held up
+    vTaskDelay(10 / portTICK_PERIOD_MS); // code works without this, but I want to make sure the bluetooth server isnt held up
   }
 
   btChar = SerialBT.read() + 128;
-  //Serial.print((int) btChar);
-  //Serial.print(" ");
+  Serial.print((int) btChar);
+  Serial.print(" ");
   return btChar;
 }
 
