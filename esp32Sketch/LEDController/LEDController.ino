@@ -1,9 +1,9 @@
 #include "BluetoothSerial.h" // bluetooth library
 #include "FastLED.h" // LED library
 
-#define NUM_LEDS 330 // EPIC
+#define NUM_LEDS 330 // EPIC 330 WEAK 9
 #define LED_PIN 32
-#define BRIGHTNESS 10
+#define BRIGHTNESS 100
 #define TIME_MULT 10
 #define DATA_TASK_DELAY 200
 
@@ -15,7 +15,7 @@ boolean newPattern = false; // set to true when a new pattern is sent, set to fa
 CRGB leds[NUM_LEDS]; // led array
 
 TaskHandle_t taskHandler = NULL; // handler for the currently running led pattern task
-SemaphoreHandle_t baton; // semaphore to make sure that the pattern is not updated while the leds are updating
+SemaphoreHandle_t baton; // semaphore to stop issue of pattern getting stuck
 
 void setup() {
   Serial.begin(115200);
@@ -83,9 +83,11 @@ void checkBTData(void * parameter)
           SerialBT.print('y');
           break;
 
-        // simple and fade are formatted the same
+        // simple, fade, banner, flow are formatted the same
         case 's':
         case 'f':
+        case 'b':
+        case 'l':
           btChars[1] = getBTChar();
           btChars[2] = getBTChar();
           btChars[3] = getBTChar();
@@ -128,6 +130,9 @@ void updatePattern(void * parameter)
         case 'f':
           xTaskCreatePinnedToCore(fade, "fade", 1000, NULL, 2, &taskHandler, 1);
           break;
+        case 'b':
+          xTaskCreatePinnedToCore(banner, "banner", 1000, NULL, 2, &taskHandler, 1);
+          break;
       }
       Serial.println("Update Done");
       xSemaphoreGive(baton);
@@ -162,7 +167,7 @@ void simple(void * parameter)
     }
     else
     {
-      CHSV hsv(btChars[4 + i], 0, 255);
+      CHSV hsv(btChars[4 + i], 0, 255 / 2);
       hsv2rgb_spectrum(hsv, colors[i]);
     }
   }
@@ -216,11 +221,85 @@ void simple(void * parameter)
   }
 }
 
+void banner(void * parameter)
+{
+  vTaskDelay(100 / portTICK_PERIOD_MS); // delay here fixes issue of leds freezing when switching patterns
+  xSemaphoreTake(baton, portMAX_DELAY);
+  Serial.println("Starting Banner");
+  uint8_t stripLen = btChars[1]; // length of each strip
+  int interval = (int) btChars[2] * TIME_MULT; // how fast the colors switch
+  
+  if (stripLen == 0) stripLen = NUM_LEDS; // if it is zero, then the whole strip is one color
+
+  uint8_t numColors = btChars[3]; // the number of colors
+  
+  CRGB colors[numColors];
+  int strip; // keeps track of what strip is being colored
+
+  // get colors from btChars
+  for (int i = 0; i < numColors; i++)
+  {
+    if (btChars[4 + i] != 255)
+    {
+      CHSV hsv(btChars[4 + i], 255, 255);
+      hsv2rgb_spectrum(hsv, colors[i]);
+    }
+    else
+    {
+      CHSV hsv(btChars[4 + i], 0, 255 / 2);
+      hsv2rgb_spectrum(hsv, colors[i]);
+    }
+  }
+
+  // set colors of each strip
+  for (strip = 0; strip < (NUM_LEDS / stripLen); strip++)
+  {
+    setColor(stripLen * strip, stripLen, colors[strip % numColors]);
+  }
+  // set final incomplete strip
+  setColor(NUM_LEDS - (NUM_LEDS % stripLen), NUM_LEDS % stripLen, colors[strip % numColors]);
+  FastLED.show();
+  Serial.println("Banner setup complete");
+  xSemaphoreGive(baton);
+
+  if (interval != 0)
+  {
+    uint8_t currentCol = 0;
+  
+    for (;;)
+    {
+      xSemaphoreTake(baton, portMAX_DELAY);
+
+      CRGB temp; // holds the last color
+
+      temp = leds[NUM_LEDS - 1]; 
+      for (int i = NUM_LEDS - 1; i > 0; i--)
+      {
+        leds[i] = leds[i - 1];
+      }
+      leds[0] = temp;
+      
+      FastLED.show();
+  
+      xSemaphoreGive(baton);
+      vTaskDelay(interval / portTICK_PERIOD_MS);
+    }
+  }
+  // if the interval is zero, don't update the leds and do nothing
+  else
+  {
+    for(;;)
+    {
+      vTaskDelay(10000 / portTICK_PERIOD_MS);
+    }
+  }
+}
+
 
 void fade(void * parameter)
 {
-  vTaskDelay(100 / portTICK_PERIOD_MS); // delay here seems to fix the problem of the leds freezing randomly on pattern switch, semaphores may not be needed
-  xSemaphoreTake(baton, portMAX_DELAY); // semaphore is taken to ensure task is not killed while updating leds
+  vTaskDelay(100 / portTICK_PERIOD_MS); // delay here seems to fix the problem of the leds freezing randomly on pattern switch
+  xSemaphoreTake(baton, portMAX_DELAY);
   Serial.println("Starting Fade");
   
   int fade = btChars[1]; // fade of pattern
@@ -253,7 +332,7 @@ void fade(void * parameter)
     }
     else
     {
-      CHSV hsv(hues[currentCol], 0, currentFade); // create hsv color
+      CHSV hsv(hues[currentCol], 0, currentFade / 2); // create hsv color
       hsv2rgb_spectrum(hsv, rgb); // convert to rgb
     }
     
@@ -282,6 +361,88 @@ void fade(void * parameter)
     }
     xSemaphoreGive(baton);
     vTaskDelay(interval / portTICK_PERIOD_MS);
+  }
+}
+
+void flow(void * parameter)
+{
+  vTaskDelay(100 / portTICK_PERIOD_MS); // delay here fixes issue of leds freezing when switching patterns
+  xSemaphoreTake(baton, portMAX_DELAY);
+  Serial.println("Starting Flow");
+
+  int interval = (int) btChars[2] * TIME_MULT; // how fast the colors switch
+
+  uint8_t numColors = btChars[3]; // the number of colors
+  
+  uint8_t hues[numColors];
+  int strip; // keeps track of what strip is being colored
+
+  // get hues from btChars
+  for (int i = 0; i < numColors; i++)
+  {
+    hues[i] = btChars[4 + i];
+  }
+
+  int numLeds2 = NUM_LEDS - numColors; // number of leds adjusted for flow
+  int flowSteps = (numLeds2 - (numLeds2 % (numColors * 2))) / (numColors * 2); // steps for flow
+  int currentColor = 0; // keeps track of current color
+  int currentLed = 0; // keeps track of the current LED
+
+  for (int i = 1; i <= numColors * 2; i++)
+  {
+    for (int j = 1; j <= flowSteps; j++)
+    {
+      CHSV hsv(hues[currentColor], 128 + ((int) (127 * ( (float) j / flowSteps))), 128 + ((int) (127 * ( (float) j / flowSteps)))); // create hsv color
+      hsv2rgb_spectrum(hsv, leds[currentLed]);
+      currentLed++;
+    }
+    
+    CHSV hsv(hues[currentColor], 255, 255); // create hsv color
+    hsv2rgb_spectrum(hsv, leds[currentLed]);
+    currentLed++;
+
+    if (!(i % 2))
+    {
+      currentColor++;
+    }
+  }
+
+  setColor(currentLed, NUM_LEDS - currentLed, CRGB::Black);
+
+  FastLED.show();
+  Serial.println("Flow setup complete");
+  xSemaphoreGive(baton);
+
+  if (interval != 0)
+  {
+    uint8_t currentCol = 0;
+  
+    for (;;)
+    {
+      xSemaphoreTake(baton, portMAX_DELAY);
+
+      CRGB temp; // holds the last color
+
+      temp = leds[NUM_LEDS - 1]; 
+      for (int i = NUM_LEDS - 1; i > 0; i--)
+      {
+        leds[i] = leds[i - 1];
+      }
+      leds[0] = temp;
+      
+      FastLED.show();
+  
+      xSemaphoreGive(baton);
+      vTaskDelay(interval / portTICK_PERIOD_MS);
+    }
+  }
+  // if the interval is zero, don't update the leds and do nothing
+  else
+  {
+    for(;;)
+    {
+      vTaskDelay(10000 / portTICK_PERIOD_MS);
+    }
   }
 }
 

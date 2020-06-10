@@ -71,6 +71,12 @@ public class PatternActivity extends AppCompatActivity implements AdapterView.On
             case 1:
                 selected = new FadeFragment();
                 break;
+            case 2:
+                selected = new BannerFragment();
+                break;
+            case 3:
+                selected = new FlowFragment();
+                break;
         }
         // show new fragment
         getSupportFragmentManager().beginTransaction().replace(fragmentContainer.getId(), selected).commit();
