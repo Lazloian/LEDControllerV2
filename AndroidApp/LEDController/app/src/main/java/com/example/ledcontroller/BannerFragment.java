@@ -63,6 +63,26 @@ public class BannerFragment extends Fragment {
         EditText lengthText = view.findViewById(R.id.editText_length);
         EditText speedText = view.findViewById(R.id.editText_speed);
 
+        int edit = this.getArguments().getInt("edit"); // get edit number
+
+        if (edit == 1) // check if editing
+        {
+            // get color pattern and code
+            ColorPattern pattern = this.getArguments().getParcelable("pattern");
+            byte[] code = pattern.getCode();
+
+            // set editTexts
+            lengthText.setText(Integer.toString(fromByte(code[1])));
+            speedText.setText(Integer.toString(fromByte(code[2])));
+
+            // set colors and color previews
+            for (int i = 0; i < fromByte(code[3]); i++)
+            {
+                colors[i] = Math.round(((float) fromByte(code[4 + i]) / 255) * ((float) hueBarMax / hueBarStep));
+                setPreview(colorViews[1 + i], Math.round(((float) fromByte(code[4 + i]) / 255) * ((float) hueBarMax / hueBarStep)));
+            }
+        }
+
         // seekBar listener
         hueBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -206,5 +226,12 @@ public class BannerFragment extends Fragment {
             Log.d(TAG, "toByte: WARNING number input is not in the range of 0 - 255");
         }
         return (byte) (number - 128);
+    }
+
+    private int fromByte (byte byteNum)
+    {
+        int number = byteNum;
+        Log.d(TAG, "fromByte: " + (number + 128));
+        return  number + 128;
     }
 }

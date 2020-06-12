@@ -62,6 +62,25 @@ public class FlowFragment extends Fragment {
         // editTexts for length and speed
         EditText speedText = view.findViewById(R.id.editText_speed);
 
+        int edit = this.getArguments().getInt("edit"); // get edit number
+
+        if (edit == 1) // check if editing
+        {
+            // get color pattern and code
+            ColorPattern pattern = this.getArguments().getParcelable("pattern");
+            byte[] code = pattern.getCode();
+
+            // set editTexts
+            speedText.setText(Integer.toString(fromByte(code[2])));
+
+            // set colors and color previews
+            for (int i = 0; i < fromByte(code[3]); i++)
+            {
+                colors[i] = Math.round(((float) fromByte(code[4 + i]) / 255) * ((float) hueBarMax / hueBarStep));
+                setPreview(colorViews[1 + i], Math.round(((float) fromByte(code[4 + i]) / 255) * ((float) hueBarMax / hueBarStep)));
+            }
+        }
+
         // seekBar listener
         hueBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -118,8 +137,8 @@ public class FlowFragment extends Fragment {
                         // finally get to creating the pattern code and sending it
 
                         byte[] code = new byte[4 + num_colors]; // VLA REEEEEEEEEEEEEEEEE
-                        // 'f' is the symbol for flow pattern
-                        code[0] = 'f';
+                        // 'l' is the symbol for flow pattern
+                        code[0] = 'l';
                         // next is the length of each color
                         code[1] = toByte(0);
                         // next is the speed of the flashing
@@ -203,5 +222,12 @@ public class FlowFragment extends Fragment {
             Log.d(TAG, "toByte: WARNING number input is not in the range of 0 - 255");
         }
         return (byte) (number - 128);
+    }
+
+    private int fromByte (byte byteNum)
+    {
+        int number = byteNum;
+        Log.d(TAG, "fromByte: " + (number + 128));
+        return  number + 128;
     }
 }

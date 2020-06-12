@@ -16,6 +16,7 @@
     <string name="textView_fade">Fade:\n0 - 255</string>
 
     <string-array name="types_array">
+        <item>Pick A Pattern</item>
         <item>Simple</item>
         <item>Fade</item>
         <item>Banner</item>

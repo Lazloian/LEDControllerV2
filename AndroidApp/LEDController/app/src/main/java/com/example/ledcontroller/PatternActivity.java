@@ -52,34 +52,60 @@ public class PatternActivity extends AppCompatActivity implements AdapterView.On
 
         // fragmentContainer
         fragmentContainer = findViewById(R.id.frameLayout);
-        getSupportFragmentManager().beginTransaction().replace(fragmentContainer.getId(), new SimpleFragment()).commit();
 
         // EditText for the name
         nameText = findViewById(R.id.editText_name);
+
+        // get intent and see if edit was selected
+        Intent intent = getIntent();
+        int edit = intent.getIntExtra(PatternsFragment.EXTRA_EDIT, 0);
+
+        // if editing a pattern, show the fragment for the pattern. if not, run simple fragment
+        if (edit == 1)
+        {
+            ColorPattern pattern = intent.getParcelableExtra(PatternsFragment.EXTRA_PATTERN);
+            nameText.setText(pattern.getName());
+            startEdit(pattern);
+        }
     }
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        // fragment that will be shown
-        Fragment selected = null;
 
-        switch (position)
-        {
-            case 0: // Simple
-                selected = new SimpleFragment();
-                break;
-            case 1:
-                selected = new FadeFragment();
-                break;
-            case 2:
-                selected = new BannerFragment();
-                break;
-            case 3:
-                selected = new FlowFragment();
-                break;
+        if (position != 0) { // only show a fragment once one has been picked
+            // fragment that will be shown
+            Fragment selected = null;
+
+            switch (position) {
+                case 1: // Simple
+                    selected = new SimpleFragment();
+                    Log.d(TAG, "onItemSelected: showing Simple");
+                    break;
+                case 2:
+                    selected = new FadeFragment();
+                    Log.d(TAG, "onItemSelected: showing Fade");
+                    break;
+                case 3:
+                    selected = new BannerFragment();
+                    Log.d(TAG, "onItemSelected: showing Banner");
+                    break;
+                case 4:
+                    selected = new FlowFragment();
+                    Log.d(TAG, "onItemSelected: showing Flow");
+                    break;
+                case 5:
+                    selected = new MixFragment();
+                    Log.d(TAG, "onItemSelected: showing Mix");
+                    break;
+            }
+
+            // create a bundle and set it not to edit
+            Bundle bundle = new Bundle();
+            bundle.putInt("edit", 0);
+            selected.setArguments(bundle);
+            // show new fragment
+            getSupportFragmentManager().beginTransaction().replace(fragmentContainer.getId(), selected).commit();
         }
-        // show new fragment
-        getSupportFragmentManager().beginTransaction().replace(fragmentContainer.getId(), selected).commit();
     }
 
     @Override
@@ -100,6 +126,48 @@ public class PatternActivity extends AppCompatActivity implements AdapterView.On
         super.onPause();
         EventBus.getDefault().unregister(this);
     }
+
+    // shows the correct fragment based on the first character of the pattern code
+    void startEdit(ColorPattern pattern)
+    {
+        byte[] code = pattern.getCode(); // get pattern code
+
+        Fragment selected = null;
+
+        switch (code[0])
+        {
+            case 's': // Simple
+                selected = new SimpleFragment();
+                Log.d(TAG, "startEdit: simple");
+                break;
+            case 'f':
+                selected = new FadeFragment();
+                Log.d(TAG, "startEdit: fade");
+                break;
+            case 'b':
+                selected = new BannerFragment();
+                Log.d(TAG, "startEdit: banner");
+                break;
+            case 'l':
+                selected = new FlowFragment();
+                Log.d(TAG, "startEdit: flow");
+                break;
+            case 'm':
+                selected = new MixFragment();
+                Log.d(TAG, "startEdit: mix");
+                break;
+        }
+
+        // create bundle with color pattern
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("pattern", pattern);
+        bundle.putInt("edit", 1); // 1 for editing
+
+        // add bundle to fragment arguments and start the fragment
+        selected.setArguments(bundle);
+        getSupportFragmentManager().beginTransaction().replace(fragmentContainer.getId(), selected).commit();
+    }
+
     // Subscribers
     // receives the pattern code from the respective pattern thread
     @Subscribe (threadMode = ThreadMode.MAIN)

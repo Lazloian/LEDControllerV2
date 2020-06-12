@@ -27,6 +27,8 @@ public class PatternsFragment extends Fragment implements PatternListAdapter.OnP
     private static final String TAG = "PatternsFragment";
 
     public static final int REQUEST_CODE = 1;
+    public static final String EXTRA_EDIT = "EDIT";
+    public static final String EXTRA_PATTERN = "PATTERN";
 
     // color pattern that is currently selected
     private ColorPattern selected = null;
@@ -101,7 +103,26 @@ public class PatternsFragment extends Fragment implements PatternListAdapter.OnP
             public void onClick(View v) {
                 // start newPattern Activity
                 Intent newPatternIntent = new Intent(getContext(), PatternActivity.class);
+                newPatternIntent.putExtra(EXTRA_EDIT, 0); // creating a new pattern, not editing
                 startActivityForResult(newPatternIntent, REQUEST_CODE);
+            }
+        });
+
+        editButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // check if a pattern has been selected
+                if (selected != null) {
+                    // create intent for PatternActivity
+                    Intent editPatternIntent = new Intent(getContext(), PatternActivity.class);
+                    editPatternIntent.putExtra(EXTRA_EDIT, 1); // send for edit
+                    editPatternIntent.putExtra(EXTRA_PATTERN, selected); // send the selected pattern
+                    startActivityForResult(editPatternIntent, REQUEST_CODE); // start new activity
+                }
+                else
+                {
+                    selectedText.setText("No Pattern Selected");
+                }
             }
         });
     }

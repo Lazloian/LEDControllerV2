@@ -83,11 +83,12 @@ void checkBTData(void * parameter)
           SerialBT.print('y');
           break;
 
-        // simple, fade, banner, flow are formatted the same
+        // all patterns are formatted the same (for now)
         case 's':
         case 'f':
         case 'b':
         case 'l':
+        case 'm':
           btChars[1] = getBTChar();
           btChars[2] = getBTChar();
           btChars[3] = getBTChar();
@@ -132,7 +133,11 @@ void updatePattern(void * parameter)
           break;
         case 'b':
           xTaskCreatePinnedToCore(banner, "banner", 1000, NULL, 2, &taskHandler, 1);
+        case 'l':
+          xTaskCreatePinnedToCore(flow, "flow", 1000, NULL, 2, &taskHandler, 1);
           break;
+        case 'm':
+          xTaskCreatePinnedToCore(mix, "mix", 1000, NULL, 2, &taskHandler, 1);
       }
       Serial.println("Update Done");
       xSemaphoreGive(baton);
@@ -295,6 +300,66 @@ void banner(void * parameter)
   }
 }
 
+void mix(void * parameter)
+{
+  vTaskDelay(100 / portTICK_PERIOD_MS); // delay here seems to fix the problem of the leds freezing randomly on pattern switch
+  xSemaphoreTake(baton, portMAX_DELAY);
+  Serial.println("Starting Mix");
+
+  uint8_t fade = btChars[1]; // fade of mix
+  int interval = (int) btChars[2] * TIME_MULT; // the time between fade steps
+  uint8_t hues[2] = {btChars[4], btChars[5]}; // the hues of the colors in the pattern
+
+  int currentFade = 0;
+
+  Serial.println("Mix Setup Complete");
+  xSemaphoreGive(baton);
+
+  for (;;)
+  {
+    for (currentFade = 0; currentFade <= 255; currentFade += fade)
+    {
+      xSemaphoreTake(baton, portMAX_DELAY);
+      for (int i = 0; i < NUM_LEDS; i++)
+      {
+        if (i % 2)
+        {
+          CHSV hsv(hues[0], 255, currentFade);
+          hsv2rgb_spectrum(hsv, leds[i]);
+        }
+        else
+        {
+          CHSV hsv(hues[1], 255, 255 - currentFade);
+          hsv2rgb_spectrum(hsv, leds[i]);
+        }
+      }
+      FastLED.show();
+      xSemaphoreGive(baton);
+      vTaskDelay(interval / portTICK_PERIOD_MS);
+    }
+
+    for (currentFade = 0; currentFade <= 255; currentFade += fade)
+    {
+      xSemaphoreTake(baton, portMAX_DELAY);
+      for (int i = 0; i < NUM_LEDS; i++)
+      {
+        if (i % 2)
+        {
+          CHSV hsv(hues[0], 255, 255 - currentFade);
+          hsv2rgb_spectrum(hsv, leds[i]);
+        }
+        else
+        {
+          CHSV hsv(hues[1], 255, currentFade);
+          hsv2rgb_spectrum(hsv, leds[i]);
+        }
+      }
+      FastLED.show();
+      xSemaphoreGive(baton);
+      vTaskDelay(interval / portTICK_PERIOD_MS);
+    }
+  }
+}
 
 void fade(void * parameter)
 {
@@ -388,22 +453,24 @@ void flow(void * parameter)
   int currentColor = 0; // keeps track of current color
   int currentLed = 0; // keeps track of the current LED
 
-  for (int i = 1; i <= numColors * 2; i++)
+  for (int i = 0; i < numColors; i++) // for each color
   {
-    for (int j = 1; j <= flowSteps; j++)
+    for (int j = 1; j <= flowSteps; j++) // fade up to the color
     {
-      CHSV hsv(hues[currentColor], 128 + ((int) (127 * ( (float) j / flowSteps))), 128 + ((int) (127 * ( (float) j / flowSteps)))); // create hsv color
+      CHSV hsv(hues[i], (50 + (int) (205 * ( (float) j / flowSteps))), 128 + ((int) (127 * ( (float) j / flowSteps)))); // create hsv color
       hsv2rgb_spectrum(hsv, leds[currentLed]);
       currentLed++;
     }
     
-    CHSV hsv(hues[currentColor], 255, 255); // create hsv color
+    CHSV hsv(hues[i], 255, 255); // main color
     hsv2rgb_spectrum(hsv, leds[currentLed]);
     currentLed++;
 
-    if (!(i % 2))
+    for (int j = flowSteps; j >= 1; j--) // fade away from the color
     {
-      currentColor++;
+      CHSV hsv(hues[i], (50 + (int) (205 * ( (float) j / flowSteps))), 128 + ((int) (127 * ( (float) j / flowSteps)))); // create hsv color
+      hsv2rgb_spectrum(hsv, leds[currentLed]);
+      currentLed++;
     }
   }
 
@@ -415,16 +482,14 @@ void flow(void * parameter)
 
   if (interval != 0)
   {
-    uint8_t currentCol = 0;
-  
     for (;;)
     {
       xSemaphoreTake(baton, portMAX_DELAY);
 
       CRGB temp; // holds the last color
 
-      temp = leds[NUM_LEDS - 1]; 
-      for (int i = NUM_LEDS - 1; i > 0; i--)
+      temp = leds[currentLed - 1]; 
+      for (int i = currentLed - 1; i > 0; i--)
       {
         leds[i] = leds[i - 1];
       }

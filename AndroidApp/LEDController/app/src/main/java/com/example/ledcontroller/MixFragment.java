@@ -17,7 +17,7 @@ import androidx.fragment.app.Fragment;
 
 import org.greenrobot.eventbus.EventBus;
 
-public class FadeFragment extends Fragment {
+public class MixFragment extends Fragment {
     private static final String TAG = "fadeFragment";
 
     private int hueBarMax = 360;
@@ -34,18 +34,17 @@ public class FadeFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_fade, container, false);
+        View view = inflater.inflate(R.layout.fragment_mix, container, false);
 
         // get seekBar and set its max
         hueBar = view.findViewById(R.id.seekBar_hue);
         hueBar.setMax(hueBarMax / hueBarStep);
 
         // box to preview color and set colors
-        TextView[] colorViews = new TextView[4];
+        TextView[] colorViews = new TextView[3];
         colorViews[0] = view.findViewById(R.id.textView_colorPreview);
         colorViews[1] = view.findViewById(R.id.textView_colorSet1);
         colorViews[2] = view.findViewById(R.id.textView_colorSet2);
-        colorViews[3] = view.findViewById(R.id.textView_colorSet3);
 
         // set default to each of them to none. enhanced for loops are kind of epic
         for (TextView preview: colorViews)
@@ -134,15 +133,15 @@ public class FadeFragment extends Fragment {
                             num_colors++;
                     }
 
-                    if (num_colors == 0) {
+                    if (num_colors != 2) {
                         EventBus.getDefault().post(new PatternMessage(null, PatternMessage.ERROR_COLOR_MISSING));
                     }
                     else {
                         // finally get to creating the pattern code and sending it
 
                         byte[] code = new byte[4 + num_colors]; // VLA REEEEEEEEEEEEEEEEE
-                        // 'f' is the symbol for fade pattern
-                        code[0] = 'f';
+                        // 'm' is the symbol for mix pattern
+                        code[0] = 'm';
                         // next is the fade for the pattern
                         code[1] = toByte(fade);
                         // next is the speed of the flashing
@@ -184,7 +183,7 @@ public class FadeFragment extends Fragment {
                 colors[colorSet - 1] = progress;
                 setPreview(colorViews[colorSet], progress);
 
-                if (colorSet >= 3)
+                if (colorSet >= 2)
                 {
                     colorSet = 1;
                 }

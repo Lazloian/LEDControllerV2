@@ -34,7 +34,7 @@ public class PatternViewModel extends AndroidViewModel {
         mRepository.insert(colorPattern);
     }
 
-    // updates a color pattern already in teh database
+    // updates a color pattern already in the database
     public void update(ColorPattern colorPattern)
     {
         mRepository.update(colorPattern);
