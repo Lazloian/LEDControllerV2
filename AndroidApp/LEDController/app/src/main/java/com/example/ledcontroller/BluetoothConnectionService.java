@@ -236,7 +236,7 @@ public class BluetoothConnectionService {
                 try {
                     mmInStream.read(buffer);
                     // takes the first (bytes) number of bytes from the buffer and converts it to a string with 0 offset
-                    char incomingMessage = (char) buffer[0];//new String(buffer, 0, 1);
+                    char incomingMessage = (char) buffer[0];
                     //Log.d(TAG, "InputStream: " + incomingMessage);
 
                     // Send incomingMessage to MainActivity through EventBus

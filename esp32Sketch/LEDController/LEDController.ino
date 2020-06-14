@@ -1,9 +1,9 @@
 #include "BluetoothSerial.h" // bluetooth library
 #include "FastLED.h" // LED library
 
-#define NUM_LEDS 330 // EPIC 330 WEAK 9
+#define NUM_LEDS 9 // EPIC 330 WEAK 9 TRUE 327
 #define LED_PIN 32
-#define BRIGHTNESS 100
+#define BRIGHTNESS 75
 #define TIME_MULT 10
 #define DATA_TASK_DELAY 200
 
@@ -99,6 +99,13 @@ void checkBTData(void * parameter)
           }
           newPattern = true; // since this a new pattern
           break;
+        case 'r':
+          btChars[1] = getBTChar();
+          xSemaphoreTake(baton, portMAX_DELAY);
+          FastLED.setBrightness(btChars[1]);
+          xSemaphoreGive(baton);
+          SerialBT.print('d');
+          break;
       }
       Serial.println("\nCode Done");
     }
@@ -133,11 +140,13 @@ void updatePattern(void * parameter)
           break;
         case 'b':
           xTaskCreatePinnedToCore(banner, "banner", 1000, NULL, 2, &taskHandler, 1);
+          break;
         case 'l':
           xTaskCreatePinnedToCore(flow, "flow", 1000, NULL, 2, &taskHandler, 1);
           break;
         case 'm':
           xTaskCreatePinnedToCore(mix, "mix", 1000, NULL, 2, &taskHandler, 1);
+          break;
       }
       Serial.println("Update Done");
       xSemaphoreGive(baton);
@@ -261,16 +270,14 @@ void banner(void * parameter)
   {
     setColor(stripLen * strip, stripLen, colors[strip % numColors]);
   }
-  // set final incomplete strip
-  setColor(NUM_LEDS - (NUM_LEDS % stripLen), NUM_LEDS % stripLen, colors[strip % numColors]);
+  // set final incomplete strip the same color as the last strip
+  setColor(NUM_LEDS - (NUM_LEDS % stripLen), NUM_LEDS % stripLen, colors[(strip - 1) % numColors]);
   FastLED.show();
   Serial.println("Banner setup complete");
   xSemaphoreGive(baton);
 
   if (interval != 0)
   {
-    uint8_t currentCol = 0;
-  
     for (;;)
     {
       xSemaphoreTake(baton, portMAX_DELAY);
@@ -320,18 +327,13 @@ void mix(void * parameter)
     for (currentFade = 0; currentFade <= 255; currentFade += fade)
     {
       xSemaphoreTake(baton, portMAX_DELAY);
-      for (int i = 0; i < NUM_LEDS; i++)
+      for (int i = 1; i < NUM_LEDS; i += 2)
       {
-        if (i % 2)
-        {
-          CHSV hsv(hues[0], 255, currentFade);
-          hsv2rgb_spectrum(hsv, leds[i]);
-        }
-        else
-        {
-          CHSV hsv(hues[1], 255, 255 - currentFade);
-          hsv2rgb_spectrum(hsv, leds[i]);
-        }
+        CHSV hsv(hues[0], 255, currentFade);
+        hsv2rgb_spectrum(hsv, leds[i]);
+        
+        CHSV hsv2(hues[1], 255, 255 - currentFade);
+        hsv2rgb_spectrum(hsv2, leds[i - 1]);
       }
       FastLED.show();
       xSemaphoreGive(baton);
@@ -341,18 +343,13 @@ void mix(void * parameter)
     for (currentFade = 0; currentFade <= 255; currentFade += fade)
     {
       xSemaphoreTake(baton, portMAX_DELAY);
-      for (int i = 0; i < NUM_LEDS; i++)
+      for (int i = 1; i < NUM_LEDS; i += 2)
       {
-        if (i % 2)
-        {
-          CHSV hsv(hues[0], 255, 255 - currentFade);
-          hsv2rgb_spectrum(hsv, leds[i]);
-        }
-        else
-        {
-          CHSV hsv(hues[1], 255, currentFade);
-          hsv2rgb_spectrum(hsv, leds[i]);
-        }
+        CHSV hsv(hues[0], 255, 255 - currentFade);
+        hsv2rgb_spectrum(hsv, leds[i]);
+        
+        CHSV hsv2(hues[1], 255, currentFade);
+        hsv2rgb_spectrum(hsv2, leds[i - 1]);
       }
       FastLED.show();
       xSemaphoreGive(baton);

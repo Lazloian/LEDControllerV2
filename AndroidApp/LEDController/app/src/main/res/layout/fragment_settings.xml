@@ -1,14 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/holo_blue_light">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/background_light">
 
     <TextView
+        android:id="@+id/textView_settings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Settings Fragment"
-        android:textSize="30sp"
-        android:layout_centerInParent="true"/>
+        android:text="@string/settings_textview"
+        android:textSize="35sp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="20dp"/>
 
-</RelativeLayout>
+    <TextView
+        android:id="@+id/textView_brightness"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/textView_brightness"
+        android:textSize="25sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView_settings"
+        android:layout_marginTop="40dp"
+        android:layout_marginStart="20dp" />
+
+    <EditText
+        android:id="@+id/editText_brightness"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:inputType="number"
+        android:maxLines="1"
+        android:textSize="25sp"
+        app:layout_constraintLeft_toRightOf="@+id/textView_brightness"
+        app:layout_constraintBottom_toBottomOf="@+id/textView_brightness"
+        android:layout_marginStart="20dp"
+        android:layout_marginBottom="20dp"/>
+
+    <TextView
+        android:id="@+id/textView_error"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="25sp"
+        android:textColor="@android:color/holo_red_light"
+        app:layout_constraintBottom_toTopOf="@+id/button_apply"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginBottom="40dp"/>
+
+    <Button
+        android:id="@+id/button_apply"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/button_apply"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginBottom="40dp" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

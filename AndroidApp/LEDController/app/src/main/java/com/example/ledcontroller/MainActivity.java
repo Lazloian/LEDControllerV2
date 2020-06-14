@@ -240,6 +240,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void brightnessBT(int brightness)
+    {
+        // check if esp32 is connected
+        if (isConnected)
+        {
+            // create code for brightness
+            byte[] code = new byte[2];
+            code[0] = 'r'; // 'r' for b'r'ightness, I am running out of letters that make sense
+            code[1] = (byte) (brightness - 128); // converting to byte
+
+            // send brightness
+            Log.d(TAG, "brightnessBT: Updating Brightness");
+            mBluetoothConnection.write(code);
+        }
+        else
+        {
+            Toast.makeText(this, "Controller Not Connected", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     // EventBus subscribers
     @Subscribe
     public void onFragMessageReceive(FragMessage fragMessage)
@@ -261,6 +281,9 @@ public class MainActivity extends AppCompatActivity {
             case MainMessage.BT_CONNECT:
                 connectBT();
                 break;
+            case MainMessage.BT_BRIGHTNESS:
+                brightnessBT(mainMessage.getPosition());
+                break;
             case MainMessage.CONNECTION_SUCCESS:
                 Toast.makeText(this, "Connection Successful", Toast.LENGTH_SHORT).show();
                 isConnected = true;
@@ -272,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Subscribe
+    @Subscribe (threadMode = ThreadMode.MAIN)
     public void onBTMessageReceive(BTMessage btMessage)
     {
         char message = btMessage.getMessage();
@@ -287,6 +310,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case 'd':
                 Log.d(TAG, "onBTMessageReceive: Send Successful");
+                Toast.makeText(this, "Settings Applied", Toast.LENGTH_SHORT).show();
                 break;
         }
     }

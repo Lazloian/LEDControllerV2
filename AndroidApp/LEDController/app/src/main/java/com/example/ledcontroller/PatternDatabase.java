@@ -50,6 +50,7 @@ public abstract class PatternDatabase extends RoomDatabase {
 
             databaseWriterExecutor.execute(() ->
             {
+                /*
                 PatternDao dao = INSTANCE.patternDao();
                 // interact with the database below
                 // delete previous patterns (for testing)
@@ -63,6 +64,7 @@ public abstract class PatternDatabase extends RoomDatabase {
                 code[4] = 160 - 128;
                 pattern = new ColorPattern("Blue", code);
                 dao.insert(pattern);
+                 */
             });
         }
     };
