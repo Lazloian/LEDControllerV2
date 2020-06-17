@@ -1,7 +1,7 @@
 #include "BluetoothSerial.h" // bluetooth library
 #include "FastLED.h" // LED library
 
-#define NUM_LEDS 9 // EPIC 330 WEAK 9 TRUE 327
+#define NUM_LEDS 327 // EPIC 330 WEAK 9 TRUE 327
 #define LED_PIN 32
 #define BRIGHTNESS 75
 #define TIME_MULT 10
@@ -318,6 +318,8 @@ void mix(void * parameter)
   uint8_t hues[2] = {btChars[4], btChars[5]}; // the hues of the colors in the pattern
 
   int currentFade = 0;
+
+  setColor(0, NUM_LEDS, CRGB::Black);
 
   Serial.println("Mix Setup Complete");
   xSemaphoreGive(baton);
