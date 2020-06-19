@@ -2,10 +2,14 @@
 #include "FastLED.h" // LED library
 
 #define NUM_LEDS 327 // EPIC 330 WEAK 9 TRUE 327
-#define LED_PIN 32
+#define LED_PIN 33 // test 32 pcb 33
 #define BRIGHTNESS 75
 #define TIME_MULT 10
 #define DATA_TASK_DELAY 200
+#define DIALPIN 32 // test 33 pcb 32
+#define POWPIN 23 // Temporary
+#define OLDMAX 511
+#define NEWMAX 3
 
 BluetoothSerial SerialBT; // bluetooth communication object
 
@@ -17,6 +21,8 @@ CRGB leds[NUM_LEDS]; // led array
 TaskHandle_t taskHandler = NULL; // handler for the currently running led pattern task
 SemaphoreHandle_t baton; // semaphore to stop issue of pattern getting stuck
 
+uint8_t lastState = 0;
+
 void setup() {
   Serial.begin(115200);
   Serial.println("Booting");
@@ -27,6 +33,9 @@ void setup() {
   // set up leds
   FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
   FastLED.setBrightness(BRIGHTNESS);
+
+  // set up analog read resolution
+  analogReadResolution(9); // results in an analog read range of 0 - 511
 
   // set up task scheduler (all tasks run on core 1 to not slow down bluetooth server running on core 0)
 
@@ -52,8 +61,24 @@ void setup() {
     0 // core to run on
   );
 
+  // task for checking the potentiometer
+  xTaskCreatePinnedToCore(
+    checkDial, // function to run
+    "checkDial", // name of task
+    1000, // stack size (bytes)
+    NULL, // parameter to pass
+    5, // task priority
+    NULL, // task handle
+    0 // core to run on
+  );
+
   // set up semaphore
   baton = xSemaphoreCreateMutex();
+
+  // TEMPORARY (needs to be changed for final)
+  // dont have access to power pins so use a digital high instead
+  pinMode(POWPIN, OUTPUT);
+  digitalWrite(POWPIN, HIGH);
 
   Serial.println("Bluetooth and setup finished");
 }
@@ -62,6 +87,67 @@ void setup() {
 // might do something later like check a switch or led
 void loop() {
   vTaskDelay(100000 / portTICK_PERIOD_MS); // pause for 100 seconds (other tasks can be run)
+}
+
+// check the potentiometer state
+void checkDial(void * parameter)
+{
+  for (;;)
+  {
+    int dialVal = analogRead(DIALPIN);
+    Serial.println(dialVal);
+    uint8_t currentState;
+  
+    if (dialVal > 480)
+    {
+      currentState = 0;
+    }
+    else if (dialVal > 470)
+    {
+      currentState = lastState;
+    }
+    else if (dialVal > 265)
+    {
+      currentState = 1;
+    }
+    else if (dialVal > 255)
+    {
+      currentState = lastState;
+    }
+    else
+    {
+      currentState = 2;
+    }
+  
+    if (lastState != currentState || currentState == 2)
+    {
+      xSemaphoreTake(baton, portMAX_DELAY);
+      if (taskHandler != NULL)
+      {
+        vTaskDelete(taskHandler);
+        Serial.println("Task Deleted");
+      }
+      if (currentState == 0)
+      {
+        Serial.println("Turning Off Leds");
+        setColor(0, NUM_LEDS, CRGB::Black);
+      }
+      else if (currentState == 1)
+      {
+        Serial.println("Waiting for pattern");
+        setColor(0, NUM_LEDS, CRGB::Gray);
+      }
+      else if (currentState == 2)
+      {
+        CHSV hsv = CHSV(dialVal, 255, 255);
+        fill_solid(leds, NUM_LEDS, hsv); // sets the leds to solid color (built-in FastLED function)
+      }
+      FastLED.show();
+      lastState = currentState;
+      xSemaphoreGive(baton);
+    }
+    vTaskDelay(DATA_TASK_DELAY / portTICK_PERIOD_MS);
+  }
 }
 
 // check for new BT Data every second and sorts data based on type
