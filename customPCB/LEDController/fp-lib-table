@@ -19,4 +19,5 @@
   (lib (name Silicon-Custom)(type KiCad)(uri D:/KiCAD_Libraries/LEDController/SparkFun-KiCad-Libraries/Footprints/Silicon-Custom.pretty)(options "")(descr ""))
   (lib (name Silicon-Standard)(type KiCad)(uri D:/KiCAD_Libraries/LEDController/SparkFun-KiCad-Libraries/Footprints/Silicon-Standard.pretty)(options "")(descr ""))
   (lib (name Switches)(type KiCad)(uri D:/KiCAD_Libraries/LEDController/SparkFun-KiCad-Libraries/Footprints/Switches.pretty)(options "")(descr ""))
+  (lib (name logos)(type KiCad)(uri ${KIPRJMOD}/logos.pretty)(options "")(descr ""))
 )

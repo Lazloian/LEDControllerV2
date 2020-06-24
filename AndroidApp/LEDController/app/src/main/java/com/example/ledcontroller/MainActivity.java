@@ -239,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Controller Not Connected", Toast.LENGTH_SHORT).show();
         }
     }
-
+/* Unused, for now
     private void brightnessBT(int brightness)
     {
         // check if esp32 is connected
@@ -259,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Controller Not Connected", Toast.LENGTH_SHORT).show();
         }
     }
-
+ */
     // EventBus subscribers
     @Subscribe
     public void onFragMessageReceive(FragMessage fragMessage)
@@ -281,9 +281,18 @@ public class MainActivity extends AppCompatActivity {
             case MainMessage.BT_CONNECT:
                 connectBT();
                 break;
+            case MainMessage.BT_OFF:
+                if (isConnected)
+                    mBluetoothConnection.write("o".getBytes());
+                else
+                    Toast.makeText(this, "Controller Not Connected", Toast.LENGTH_SHORT).show();
+                break;
+
+            /* Unused
             case MainMessage.BT_BRIGHTNESS:
                 brightnessBT(mainMessage.getPosition());
                 break;
+             */
             case MainMessage.CONNECTION_SUCCESS:
                 Toast.makeText(this, "Connection Successful", Toast.LENGTH_SHORT).show();
                 isConnected = true;

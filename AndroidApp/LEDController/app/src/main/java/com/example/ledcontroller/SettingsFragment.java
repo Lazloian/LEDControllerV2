@@ -23,6 +23,7 @@ public class SettingsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view =  inflater.inflate(R.layout.fragment_settings, container, false);
 
+        /* Unused brightness settings, having the ability to change brightness deemed unnecessary and too dangerous, for now
         // get editTexts
         EditText brightnessText = view.findViewById(R.id.editText_brightness);
 
@@ -56,7 +57,7 @@ public class SettingsFragment extends Fragment {
                 }
             }
         });
-
+        */
         return view;
     }
 }

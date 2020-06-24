@@ -6,6 +6,7 @@ public class MainMessage {
     private int mMessage;
     private int mPosition;
 
+    public static final int BT_OFF = 6;
     public static final int BT_BRIGHTNESS = 5;
     public static final int BT_SEND = 4;
     public static final int BT_CONNECT = 3;

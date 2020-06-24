@@ -33,12 +33,20 @@ public class SendFragment extends Fragment implements PatternListAdapter.OnPatte
 
         // reference graphical elements
         Button connectButton = view.findViewById(R.id.button_connect);
+        Button offButton = view.findViewById(R.id.button_off);
 
         // connectButton listener, sends a request to connect to the esp32 ledController
         connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 sendMessage(MainMessage.BT_CONNECT, 0);
+            }
+        });
+
+        offButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendMessage(MainMessage.BT_OFF, 0);
             }
         });
 
